@@ -270,37 +270,98 @@ with tab1:
         col_a, col_b = st.columns(2)
                 
         with col_a:
-            # Menampilkan grafik Proporsi Penjualan berdasarkan Customer type by Branch
-            df_customer_by_branch = df_filtered.groupby(['Branch', 'Customer type'])['Total'].sum().reset_index()
-
-            df_customer_by_branch['Percentage'] = df_customer_by_branch.groupby('Branch')['Total'].transform(
-                lambda x: (x / x.sum()) * 100
+            # Menampilkan grafik Proporsi Penjualan rata-rata by Customer type
+            df_customer_avg = (
+                df_filtered.groupby('Customer type')['Total'].mean().reset_index()
             )
+            
+            fig_customer_sb = px.bar(
+                df_customer_avg,
+                x='Customer type',
+                y='Total',
+                color='Customer type',
+                title='Average Sales Amount by Customer Type',
+                labels={'Total': 'Average Sales ($)', 'Customer type': 'Customer Type'},
+            )
+
+            # Format label angka di atas batang ($ dan 2 desimal)
+            fig_customer_sb.update_traces(
+                texttemplate='$%{y:,.2f}', textposition='outside', textangle=0
+            )
+
+            # Menambah batas atas sumbu Y (+15%) agar teks angka tidak terpotong
+            fig_customer_sb.update_layout(
+                yaxis_range=[0, max(df_customer_avg['Total']) * 1.15]
+            )
+                
+            st.plotly_chart(fig_customer_sb, use_container_width=True)
+            
+        with col_b:
+            # Menampilkan grafik Proporsi Penjualan berdasarkan Customer type by Branch
+            df_customer_by_branch = (
+                df_filtered.groupby(['Branch', 'Customer type'])['Total']
+                .sum()
+                .reset_index()
+            )
+
+            df_customer_by_branch['Percentage'] = df_customer_by_branch.groupby(
+                'Branch'
+            )['Total'].transform(lambda x: (x / x.sum()) * 100)
             
             fig_customer_sb = px.bar(
                 df_customer_by_branch,
                 x='Branch',
-                y='Percentage',
+                y='Percentage',  
                 color='Customer type',
                 barmode='group',
-                title='Proportion of Sales by Customer Type in Each Branch',
+                title='Proportion of Sales by Customer Type in Each Branch (%)',
                 labels={
                     'Branch': 'Branch',
-                    'Percentage': 'Percentage %',
-                    'Customer type': 'Customer Type'
+                    'Percentage': 'Percentage (%)',
+                    'Customer type': 'Customer Type',
                 },
             )
 
-            # Format teks di atas batang agar menampilkan simbol persentase (%)
+            # Format teks persentase di atas batang grafik
             fig_customer_sb.update_traces(texttemplate='%{y:.2f}%', textposition='outside')
 
-            # Menyesuaikan batas sumbu Y agar label persentase di atas batang tidak terpotong
+            # Sesuaikan rentang sumbu Y berdasarkan nilai persentase maksimum
             fig_customer_sb.update_layout(
-                yaxis_range=[0, max(df_customer_by_branch['Percentage']) + 10]
+                yaxis_range=[0, max(df_customer_by_branch['Percentage']) * 1.2]
             )
                 
             st.plotly_chart(fig_customer_sb, use_container_width=True)
-        with col_b:
+            
+        # Layout 2 Kolom Grafik di Bawahnya
+        col_left, col_right = st.columns(2)
+                
+        with col_left:
+            # Menampilkan grafik Proporsi rata-rata Penjualan berdasarkan Payment
+            df_avg_pay = df_filtered.groupby('Payment')['Total'].sum().reset_index()
+                        
+            df_avg_pay['Percentage'] = (
+                df_avg_pay['Total'] / df_avg_pay['Total'].sum()
+            ) * 100
+            
+            fig_avg_pay_sb = px.bar(
+                df_avg_pay,
+                x='Payment',
+                y='Percentage',
+                color='Payment',
+                title='Percentage of Total Sales by Payment Method',
+                labels={'Percentage': 'Percentage (%)', 'Payment': 'Payment Method'},
+            )
+
+            # Format label angka persentase (%) di atas batang grafik
+            fig_avg_pay_sb.update_traces(texttemplate='%{y:.2f}%', textposition='outside')
+
+            # Sesuaikan batas sumbu Y berdasarkan nilai persentase maksimum (+15%)
+            fig_avg_pay_sb.update_layout(
+                yaxis_range=[0, max(df_avg_pay['Percentage']) * 1.15]
+            )
+                
+            st.plotly_chart(fig_avg_pay_sb, use_container_width=True)
+        with col_right:
             # Menampilkan grafik Proporsi Penjualan berdasarkan Payment by Branch
             df_pay_by_branch = df_filtered.groupby(['Branch', 'Payment'])['Total'].mean().reset_index()
 
