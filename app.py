@@ -6,7 +6,7 @@ import plotly.express as px
 # ATUR LEBAR HALAMAN
 st.set_page_config(layout="wide")
 
-st.title("📈 Supermarket Analysis Dashboard")  # Judul Halaman
+st.title("📈 Supermarket Analytics Dashboard")  # Judul Halaman
 
 # 1. LOAD DATA
 df = pd.read_csv("supermarket_sales.csv")
