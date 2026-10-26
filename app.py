@@ -139,25 +139,63 @@ tab1, tab2 = st.tabs(["📊 Analysis Graphics", "📋 Data Table"])
 
 with tab1:
     if not df_filtered.empty:
-        # Menampilkan grafik Sales berdasrkan gross income by Branch
-        df_gross_income = df_filtered.groupby('Branch')['gross income'].sum().reset_index()
-
-        fig_gross_income = px.bar(
-            df_gross_income,
-            x='Branch',
-            y='gross income',
-            color='Branch',
-            title='Total Gross Income by Branch',
-            labels={'Branch': 'Branch', 'gross income': 'Total Gross Income ($)'},
-        )
-            
-        st.plotly_chart(fig_gross_income, use_container_width=True)
-        
         # Layout 2 Kolom Grafik di Bawahnya
-        #col1, col2 = st.columns(2)
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            # Menampilkan grafik Sales berdasrkan Total by Branch
+            df_total_sales = df_filtered.groupby('Branch')['Total'].sum().reset_index()
 
-        #with col1:
-            # Menampilkan grafik Sales by Product by branch
+            fig_total_sales = px.bar(
+                df_total_sales,
+                x='Branch',
+                y='Total',
+                color='Branch',
+                title='Total Sales by Branch',
+                labels={'Branch': 'Branch', 'Total': 'Total Sales ($)'},
+                text_auto='.2f'
+            )
+
+            # Menempatkan posisi label angka di atas/luar batang
+            fig_total_sales.update_traces(
+                texttemplate='$%{y:,.2f}', textposition='outside', textangle=0
+            )
+
+            # Menambah batas atas sumbu Y (+15%) agar label angka di puncak tidak terpotong
+            fig_total_sales.update_layout(
+                yaxis_range=[0, max(df_total_sales['Total']) * 1.15]
+            )
+                
+            st.plotly_chart(fig_total_sales, use_container_width=True)
+            
+        
+        with col2:
+            # Menampilkan grafik Sales berdasrkan gross income by Branch
+            df_gross_income = df_filtered.groupby('Branch')['gross income'].sum().reset_index()
+
+            fig_gross_income = px.bar(
+                df_gross_income,
+                x='Branch',
+                y='gross income',
+                color='Branch',
+                title='Total Gross Income by Branch',
+                labels={'Branch': 'Branch', 'gross income': 'Total Gross Income ($)'},
+                text_auto='.2f'
+            )
+
+            # Menempatkan posisi label angka di atas/luar batang
+            fig_gross_income.update_traces(
+                texttemplate='$%{y:,.2f}', textposition='outside', textangle=0
+            )
+
+            # Menambah batas atas sumbu Y (+15%) agar label angka di puncak tidak terpotong
+            fig_gross_income.update_layout(
+                yaxis_range=[0, max(df_gross_income['gross income']) * 1.15]
+            )
+                
+            st.plotly_chart(fig_gross_income, use_container_width=True)
+        
+        # Menampilkan grafik Sales by Product by branch
         df_product_line = (
             df_filtered.groupby('Product line')["Total"]
             .sum()
@@ -175,7 +213,18 @@ with tab1:
                 'Product line': 'Product Category',
                 'Total': 'Total Sales ($)',
             },
-            color_discrete_sequence=px.colors.qualitative.Set1
+            text_auto='.2f',
+            color_discrete_sequence=px.colors.qualitative.Set1,
+        )
+
+        # Menempatkan posisi label angka di atas/luar batang
+        fig_product_line_bar.update_traces(
+            texttemplate='$%{y:,.2f}', textposition='outside', textangle=0
+        )
+
+        # Menambah batas atas sumbu Y (+15%) agar label angka di puncak tidak terpotong
+        fig_product_line_bar.update_layout(
+            yaxis_range=[0, max(df_product_line['Total']) * 1.15]
         )
 
         st.plotly_chart(fig_product_line_bar, use_container_width=True)
@@ -183,8 +232,7 @@ with tab1:
             # Layout 2 Kolom Grafik di Bawahnya
             #col_a, col_b = st.columns(2)
             
-        #with col2:
-            # Menampilkan grafik Sales by Product by branch
+        # Menampilkan grafik Sales by Product by branch
         df_product_by_branch = (
             df_filtered.groupby(['Product line', 'Branch'])["Total"]
             .sum()
@@ -204,57 +252,89 @@ with tab1:
                 'Total': 'Total Sales ($)',
                 'Branch': 'Branch'
             },
+            text_auto='.2f',
             color_discrete_sequence=px.colors.qualitative.Set1
+        )
+
+        # Menggunakan %{x:,.2f} karena nilai numerik berada di sumbu X
+        fig_product_bar.update_traces(texttemplate='$%{x:,.2f}', textposition='outside')
+
+        # Mengatur batas kanan sumbu X (xaxis_range) agar label di samping kanan tidak terpotong
+        fig_product_bar.update_layout(
+            xaxis_range=[0, max(df_product_by_branch['Total']) * 1.25]
         )
 
         st.plotly_chart(fig_product_bar, use_container_width=True)
             
         # Layout 2 Kolom Grafik di Bawahnya
-        #col_a, col_b = st.columns(2)
+        col_a, col_b = st.columns(2)
                 
-        #with col_a:
+        with col_a:
             # Menampilkan grafik Proporsi Penjualan berdasarkan Customer type by Branch
-        df_customer_by_branch = df_filtered.groupby(['Branch', 'Customer type'])['Total'].sum().reset_index()
+            df_customer_by_branch = df_filtered.groupby(['Branch', 'Customer type'])['Total'].sum().reset_index()
 
-        fig_customer_sb = px.bar(
-            df_customer_by_branch,
-            x='Branch',
-            y='Total',
-            color='Customer type',
-            barmode='group',
-            title='Proportion of Sales by Customer Type in Each Branch',
-            labels={
-                'Branch': 'Branch',
-                'Total': 'Total Sales ($)',
-                'Customer type': 'Customer Type'
-            },
-            color_discrete_sequence=px.colors.qualitative.Set2
-        )
+            df_customer_by_branch['Percentage'] = df_customer_by_branch.groupby('Branch')['Total'].transform(
+                lambda x: (x / x.sum()) * 100
+            )
             
-        st.plotly_chart(fig_customer_sb, use_container_width=True)
-        #with col_b:
+            fig_customer_sb = px.bar(
+                df_customer_by_branch,
+                x='Branch',
+                y='Percentage',
+                color='Customer type',
+                barmode='group',
+                title='Proportion of Sales by Customer Type in Each Branch',
+                labels={
+                    'Branch': 'Branch',
+                    'Percentage': 'Percentage %',
+                    'Customer type': 'Customer Type'
+                },
+            )
+
+            # Format teks di atas batang agar menampilkan simbol persentase (%)
+            fig_customer_sb.update_traces(texttemplate='%{y:.2f}%', textposition='outside')
+
+            # Menyesuaikan batas sumbu Y agar label persentase di atas batang tidak terpotong
+            fig_customer_sb.update_layout(
+                yaxis_range=[0, max(df_customer_by_branch['Percentage']) + 10]
+            )
+                
+            st.plotly_chart(fig_customer_sb, use_container_width=True)
+        with col_b:
             # Menampilkan grafik Proporsi Penjualan berdasarkan Payment by Branch
-        df_pay_by_branch = df_filtered.groupby(['Branch', 'Payment'])['Total'].mean().reset_index()
+            df_pay_by_branch = df_filtered.groupby(['Branch', 'Payment'])['Total'].mean().reset_index()
 
-        fig_pay_sb = px.bar(
-            df_pay_by_branch,
-            x='Branch',
-            y='Total',
-            color='Payment',
-            barmode='group',
-            title='Proportion of Sales by Payment Method in Each Branch',
-            labels={
-                'Branch': 'Branch',
-                'Total': 'Total Sales ($)',
-                'Payment': 'Payment Method'
-           },
-            color_discrete_sequence=px.colors.qualitative.Prism
-        )
-            
-        st.plotly_chart(fig_pay_sb, use_container_width=True)
+            df_pay_by_branch['Percentage'] = df_pay_by_branch.groupby('Branch')[
+                'Total'
+            ].transform(lambda x: (x / x.sum()) * 100)
+                        
+            fig_pay_sb = px.bar(
+                df_pay_by_branch,
+                x='Branch',
+                y='Percentage',
+                color='Payment',
+                barmode='group',
+                title='Proportion of Sales by Payment Method in Each Branch',
+                labels={
+                    'Branch': 'Branch',
+                    'Percentage': 'Percentage %',
+                    'Payment': 'Payment Method'
+                },
+                text_auto='.2f'
+            )
+
+            # Menampilkan label angka persentase di atas setiap batang grafik
+            fig_pay_sb.update_traces(texttemplate='%{y:.2f}%', textposition='outside')
+
+            # Menyesuaikan batas sumbu Y agar label persentase tidak terpotong
+            fig_pay_sb.update_layout(
+                yaxis_range=[0, max(df_pay_by_branch['Percentage']) + 10]
+            )
+                
+            st.plotly_chart(fig_pay_sb, use_container_width=True)
                 
             
-        # Menampilkan grafik Sales berdasrkan rata-rata rating by Branch
+        # Menampilkan grafik Sales berdasrkan rata-rata rating by Product
         df_avg_rating = df_filtered.groupby('Product line')['Rating'].mean().reset_index()
 
         fig_rating = px.bar(
@@ -264,9 +344,37 @@ with tab1:
             color='Product line',
             title='Average Sales Rating by Product Category',
             labels={'Product line': 'Product Category', 'Rating': 'Average Rating'},
+            text_auto='.2f',
         )
+
+        # Menempatkan posisi teks angka di luar/atas batang
+        fig_rating.update_traces(textposition='outside')
+
+        # Menyesuaikan skala sumbu Y (0-10) agar label di atas batang tidak terpotong
+        fig_rating.update_yaxes(range=[0, 10])
             
         st.plotly_chart(fig_rating, use_container_width=True)
+        
+        # Menampilkan grafik Sales berdasrkan rata-rata rating by Branch
+        df_avg_rating_branch = df.groupby('Branch')['Rating'].mean().reset_index()
+
+        fig_rating_branch = px.bar(
+            df_avg_rating_branch,
+            x='Branch',
+            y='Rating',
+            color='Branch',
+            title='Average Sales Rating by Branch',
+            labels={'Branch': 'Branch', 'Rating': 'Average Rating'},
+            text_auto='.2f',
+        )
+
+        # Menempatkan posisi teks angka di luar/atas batang
+        fig_rating_branch.update_traces(textposition='outside')
+
+        # Menyesuaikan skala sumbu Y (0-10) agar label di atas batang tidak terpotong
+        fig_rating_branch.update_yaxes(range=[0, 10])
+
+        st.plotly_chart(fig_rating_branch, use_container_width=True)
         
     else:
         st.warning("Tidak ada data untuk ditampilkan berdasarkan filter terpilih.")
