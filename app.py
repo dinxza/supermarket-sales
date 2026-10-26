@@ -63,7 +63,7 @@ customer_types = st.sidebar.radio(
 # Sorted by Payment
 available_payments = sorted(df['Payment'].dropna().unique().tolist())
 payments = st.sidebar.multiselect(
-    "Choose Gender", 
+    "Choose Payment", 
     options=available_payments,
     default = available_payments
 )
