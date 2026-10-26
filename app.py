@@ -108,6 +108,7 @@ left, middle, right = st.columns(3, border=True)
 
 total_transactions = len(df_filtered)
 total_sales = df_filtered['Total'].sum() if not df_filtered.empty else 0
+sales_amount = (df_filtered['Unit price'] * df_filtered['Quantity']).sum() if not df_filtered.empty else 0
 avg_rating = df_filtered['Rating'].mean() if not df_filtered.empty else 0
 
 with left:
@@ -119,10 +120,10 @@ with left:
     )
 
 with middle:
-    st.badge("Total Sales", color="green")
+    st.badge("Sales Amount", color="green")
     st.metric(
         label="Total Sales", 
-        value=f"$ {total_sales:,.2f}", 
+        value=f"$ {sales_amount:,.2f}", 
         label_visibility="collapsed"
     )
     
